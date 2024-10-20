@@ -15,26 +15,12 @@ SUPABASE_HEADERS = {
     'Content-Type': 'application/json'
 }
 
-# Function to log food data into Supabase using requests
-def log_food_entry(food_amount, timestamp):
-    url = f"{SUPABASE_URL}/rest/v1/{SUPABASE_TABLE}"
-    data = {
-        "food_amount": food_amount,
-        "timestamp": timestamp
-    }
-
+# Function to log data (food, poop, pee, weight) into Supabase using requests
+def log_entry(table, data):
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
     response = requests.post(url, json=data, headers=SUPABASE_HEADERS)
-
-    # Log the response for debugging
-    print(f"Response status code: {response.status_code}")
-    print(f"Response content: {response.text}")
-
-    # If the request is successful, just return None
-    if response.status_code == 201:
-        return None  # No need to process any response
-    else:
-        print(f"Error logging data: {response.text}")
-        return {"error": f"Supabase API returned error {response.status_code}"}
+    if response.status_code != 201:
+        print(f"Error logging entry to {table}: {response.text}")
 
 # Function to calculate the dog's age in months
 def calculate_age_in_months(birthday):
@@ -57,31 +43,51 @@ def calculate_food_amount(age_in_days):
     else:
         return 323
 
-# Function to get total food fed today from Supabase
+# Function to get today's total food fed
 def get_food_fed_today():
-    url = f"{SUPABASE_URL}/rest/v1/{SUPABASE_TABLE}?select=food_amount&timestamp=gte.{datetime.today().date()}"
+    url = f"{SUPABASE_URL}/rest/v1/feeding_logs?select=food_amount&timestamp=gte.{datetime.today().date()}"
     response = requests.get(url, headers=SUPABASE_HEADERS)
     if response.status_code == 200:
         feedings = response.json()
-        total_fed_today = sum(entry['food_amount'] for entry in feedings)
-        return total_fed_today
-    else:
-        return 0
+        return sum(entry['food_amount'] for entry in feedings)
+    return 0
+
+# Function to get today's poop and pee counts
+def get_poop_pee_count():
+    url = f"{SUPABASE_URL}/rest/v1/poop_log?select=poop_count,pee_count&timestamp=gte.{datetime.today().date()}"
+    response = requests.get(url, headers=SUPABASE_HEADERS)
+    if response.status_code == 200:
+        logs = response.json()
+        # Ensure None values are treated as 0
+        poop_count = sum((log.get('poop_count') or 0) for log in logs)
+        pee_count = sum((log.get('pee_count') or 0) for log in logs)
+        return poop_count, pee_count
+    return 0, 0
+
+# Function to get the latest weight
+def get_current_weight():
+    url = f"{SUPABASE_URL}/rest/v1/weight?select=weight&order=timestamp.desc&limit=1"
+    response = requests.get(url, headers=SUPABASE_HEADERS)
+    if response.status_code == 200:
+        result = response.json()
+        if result:
+            return result[0]['weight']
+    return 0
 
 # Set Injeolmi's birthday
-injeolmi_birthday = "2024-07-01"
+injeolmi_birthday = "2024-06-27"
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    # Calculate age in days and months
     age_in_days = (datetime.today() - datetime.strptime(injeolmi_birthday, "%Y-%m-%d")).days
     age_in_months = calculate_age_in_months(injeolmi_birthday)
     recommended_grams_of_food = calculate_food_amount(age_in_days)
     
-    # Get today's total food already fed
+    # Get today's total food, poop, pee, and the current weight
     already_fed_today = get_food_fed_today()
-    
-    # Calculate the remaining food, rounding to 2 decimal places
+    poop_count, pee_count = get_poop_pee_count()
+    current_weight = get_current_weight()
+
     remaining_food = round(recommended_grams_of_food - already_fed_today, 2)
 
     if request.method == 'POST':
@@ -89,14 +95,61 @@ def home():
         if 'food_amount' in request.form:
             food_amount = int(request.form['food_amount'])
             timestamp = datetime.now().isoformat()
-            log_food_entry(food_amount, timestamp)  # Log the data into Supabase
-            return redirect(url_for('home'))  # Refresh the page
+            log_entry("feeding_logs", {"food_amount": food_amount, "timestamp": timestamp})
+            return redirect(url_for('home'))
 
     return render_template("home.html", 
                            age_in_months=age_in_months, 
                            grams_of_food=remaining_food, 
-                           already_fed_today=already_fed_today)
+                           already_fed_today=already_fed_today,
+                           poop_count=poop_count, 
+                           pee_count=pee_count,
+                           current_weight=current_weight)
 
+@app.route('/log-food', methods=['POST'])
+def log_food():
+    data = request.get_json()
+    food_amount = data.get('food_amount')
+    timestamp = data.get('timestamp')
+
+    if not food_amount:
+        return {"error": "Food amount is required"}, 400
+
+    # Log the food entry
+    log_entry("feeding_logs", {"food_amount": food_amount, "timestamp": timestamp})
+
+    return {"success": True}, 200
+
+# Log poop or pee using the same logic as food logging
+@app.route('/log-poop-pee', methods=['POST'])
+def log_poop_pee():
+    data = request.get_json()
+    log_type = data.get('type')
+    timestamp = data.get('timestamp')
+
+    if log_type not in ['poop', 'pee']:
+        return jsonify({"error": "Invalid log type"}), 400
+
+    entry = {"timestamp": timestamp}
+    if log_type == "poop":
+        entry["poop_count"] = 1
+    else:
+        entry["pee_count"] = 1
+
+    log_entry("poop_log", entry)
+    
+    return jsonify({"success": True}), 200
+
+# Log weight changes using the same logic as food logging
+@app.route('/log-weight', methods=['POST'])
+def log_weight():
+    data = request.get_json()
+    weight = data.get('weight')
+    timestamp = data.get('timestamp')
+
+    log_entry("weight", {"weight": weight, "timestamp": timestamp})
+
+    return jsonify({"success": True}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

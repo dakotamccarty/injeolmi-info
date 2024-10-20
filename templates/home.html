@@ -3,77 +3,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Injeolmi's Feeding Info</title>
-    <!-- Load Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Injeolmi's Feeding & Logs</title>
     <!-- Link to external stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <main class="container">
-        <!-- Image section with alt text and proper heading structure -->
+        <!-- Image section with alt text -->
         <section class="image-box">
             <img src="{{ url_for('static', filename='uploads/injeolmi.jpeg') }}" alt="Picture of Injeolmi" class="dog-image">
             <h1>🐾 Injeolmi 🐾</h1>
-        </section>
-
-        <!-- Feeding information section -->
-        <section class="food-info-widget">
-            <h2>🍽️ Today's Food 🍽️</h2>
             <p>Injeolmi is <span class="highlight">{{ age_in_months|round(2) }}</span> months old today!</p>
-            <p>He should get <span class="highlight">{{ grams_of_food|round(2) }} grams</span> of food today.</p>
-            
-            {% if already_fed_today > 0 %}
-                <p>He’s already been fed <span class="highlight">{{ already_fed_today }}</span> grams today.</p>
-            {% endif %}
-
-            <!-- Dog bone icon with aria-label for accessibility -->
-            <div class="log-food-container">
-                <button aria-label="Log Food" class="log-food-button">
-                    <i class="fas fa-bone fa-3x"></i>
-                </button>
+            <!-- Weight display with double-tap to update -->
+            <div class="weight-display">
+                <p>Weight (kg): <span id="weight-display">{{ current_weight|round(2) }}</span></p>
             </div>
         </section>
 
-        <!-- Hidden Log Food Form (Modal) -->
-        <div id="log-food-modal" class="modal" role="dialog" aria-labelledby="logFoodTitle" aria-hidden="true">
+        <!-- Modal for updating weight (initially hidden) -->
+        <div id="weight-modal" class="modal" style="display: none;">
             <div class="modal-content">
-                <button class="close" aria-label="Close">&times;</button>
-                <h2 id="logFoodTitle">Log Food for Injeolmi</h2>
-                <form method="POST" aria-live="polite">
-                    <label for="food_amount">How many grams of food did Injeolmi eat?</label><br>
-                    <input type="number" name="food_amount" id="food_amount" required><br><br>
-                    <input type="submit" value="Log Feeding">
+                <span class="close">&times;</span>
+                <h2>Update Injeolmi's Weight</h2>
+                <form id="weight-form">
+                    <label for="new-weight">New Weight (kg):</label>
+                    <input type="number" id="new-weight" name="new-weight" step="0.1" required>
+                    <button type="submit">Save Weight</button>
                 </form>
             </div>
+        </div>
+
+        <!-- Modal for logging food (initially hidden) -->
+        <div id="food-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Log Food for Injeolmi</h2>
+                <form id="food-form">
+                    <label for="food-amount">How many grams of food did Injeolmi eat?</label>
+                    <input type="number" id="food-amount" name="food-amount" step="1" required>
+                    <button type="submit">Log Food</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Flex container for side-by-side layout -->
+        <div class="log-container">
+            <!-- Feeding information section -->
+            <section class="food-info-widget">
+                <h2>🍽️ Food</h2>
+                <p>He should get <span class="highlight" id="remaining-food" data-recommended-food="{{ grams_of_food|round(2) }}">{{ grams_of_food|round(2) }}</span> grams of food today.</p>                
+                {% if already_fed_today > 0 %}
+                    <p>He’s already been fed <span class="highlight" id="already-fed-today">{{ already_fed_today }}</span> grams today.</p>
+                {% endif %}
+
+                <!-- Food log emoji -->
+                <div class="log-food-container">
+                    <span id="log-food-icon" title="Log Food" style="font-size: 3rem; cursor: pointer;">🍖</span>
+                </div>
+            </section>
+
+            <!-- Poop & Pee Log Section -->
+            <section class="poop-pee-widget">
+                <h2>🧻 Poop & Pee</h2>
+
+                <!-- Icons for logging poop and pee -->
+                <div class="log-icons">
+                    <span id="log-poop-icon" title="Log Poop" style="font-size: 3rem; cursor: pointer;">💩</span>
+                    <span id="log-pee-icon" title="Log Pee" style="font-size: 3rem; cursor: pointer;">🍋</span>
+                </div>
+
+                <!-- Display logged poops and pees with emojis and counters -->
+                <div id="poop-log">
+                    <span id="poop-emojis"></span>
+                    <p id="poop-count-text">Poops today: <span id="poop-count">{{ poop_count }}</span></p>
+                </div>
+                <div id="pee-log">
+                    <span id="pee-emojis"></span>
+                    <p id="pee-count-text">Pees today: <span id="pee-count">{{ pee_count }}</span></p>
+                </div>
+            </section>
         </div>
     </main>
 
     <script>
-        // Modal control script
-        const modal = document.getElementById("log-food-modal");
-        const icon = document.querySelector(".log-food-button");
-        const closeBtn = document.querySelector(".close");
+        // Variables for weight modal and double-tap event handling
+        let lastTap = 0;
+        const weightDisplay = document.getElementById('weight-display');
+        const weightModal = document.getElementById('weight-modal');
+        const foodModal = document.getElementById('food-modal');
+        const closeModalButtons = document.getElementsByClassName('close');
 
-        // Open the modal when the icon is clicked
-        icon.onclick = function() {
-            modal.style.display = "block";
-            modal.setAttribute("aria-hidden", "false");
+        // Double tap event listener for updating weight
+        weightDisplay.addEventListener('click', function (e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 300 && tapLength > 0) {
+                weightModal.style.display = 'block'; // Show the modal on double tap
+            }
+            lastTap = currentTime;
+        });
+
+        // Close modals when the close button is clicked
+        Array.from(closeModalButtons).forEach(button => {
+            button.onclick = function () {
+                weightModal.style.display = 'none';
+                foodModal.style.display = 'none';
+            };
+        });
+
+        // Close the modal if the user clicks outside of it
+        window.onclick = function (event) {
+            if (event.target == weightModal || event.target == foodModal) {
+                weightModal.style.display = 'none';
+                foodModal.style.display = 'none';
+            }
+        };
+
+        // Submit new weight through modal form
+        document.getElementById('weight-form').onsubmit = function (event) {
+            event.preventDefault();
+            const newWeight = document.getElementById('new-weight').value;
+            logWeightToDatabase(newWeight);
+            weightModal.style.display = 'none';  // Close the modal after saving
+            weightDisplay.textContent = newWeight;  // Update the weight display
+        };
+
+        // Log weight change to the database
+        function logWeightToDatabase(weight) {
+            fetch("/log-weight", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    weight: weight,
+                    timestamp: new Date().toISOString(),
+                }),
+            }).then(response => {
+                if (!response.ok) {
+                    console.error("Failed to log weight");
+                }
+            }).catch(error => {
+                console.error("Error logging weight", error);
+            });
         }
 
-        // Close the modal when the close button is clicked
-        closeBtn.onclick = function() {
-            modal.style.display = "none";
-            modal.setAttribute("aria-hidden", "true");
+        // Open food modal when the food icon is clicked
+        document.getElementById('log-food-icon').onclick = function () {
+            foodModal.style.display = 'block';  // Show the food modal when clicked
+        };
+
+        // Submit food entry through modal form
+        document.getElementById('food-form').onsubmit = function (event) {
+            event.preventDefault();
+            const foodAmount = document.getElementById('food-amount').value;
+            logFoodToDatabase(foodAmount);
+            foodModal.style.display = 'none';  // Close the modal after saving
+        };
+
+        // Log food to the database
+        function logFoodToDatabase(foodAmount) {
+            fetch("/log-food", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    food_amount: foodAmount,
+                    timestamp: new Date().toISOString(),
+                }),
+            }).then(response => {
+                if (!response.ok) {
+                    console.error("Failed to log food");
+                }
+            }).catch(error => {
+                console.error("Error logging food", error);
+            });
         }
 
-        // Close the modal when clicking outside of it
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                modal.style.display = "none";
-                modal.setAttribute("aria-hidden", "true");
+        // Initialize poop and pee emoji containers
+        const poopEmojiContainer = document.getElementById('poop-emojis');
+        const peeEmojiContainer = document.getElementById('pee-emojis');
+
+        // Helper function to render emojis
+        function renderEmojis(count, emoji, container) {
+            container.innerHTML = '';  // Clear previous emojis
+            for (let i = 0; i < count; i++) {
+                container.innerHTML += `<span class="emoji">${emoji}</span>`;
             }
         }
+
+        // Initial rendering of poop and pee emojis based on counts
+        let poopCount = {{ poop_count }};
+        let peeCount = {{ pee_count }};
+        renderEmojis(poopCount, '💩', poopEmojiContainer);
+        renderEmojis(peeCount, '🍋', peeEmojiContainer);
+
+        // Log poop and pee functionality
+        const poopIcon = document.getElementById("log-poop-icon");
+        const peeIcon = document.getElementById("log-pee-icon");
+
+        poopIcon.onclick = function() {
+            poopCount++;
+            logToDatabase("poop");
+            updateLog("poop", poopCount);
+        }
+
+        peeIcon.onclick = function() {
+            peeCount++;
+            logToDatabase("pee");
+            updateLog("pee", peeCount);
+        }
+
+        function updateLog(type, count) {
+            if (type === "poop") {
+                renderEmojis(count, '💩', poopEmojiContainer);
+                document.getElementById("poop-count").textContent = count;
+            } else if (type === "pee") {
+                renderEmojis(count, '🍋', peeEmojiContainer);
+                document.getElementById("pee-count").textContent = count;
+            }
+        }
+
+        function logToDatabase(type) {
+            // Log poop or pee to the database via a POST request
+            fetch("/log-poop-pee", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    type: type,
+                    timestamp: new Date().toISOString(),
+                }),
+            }).then(response => {
+                if (!response.ok) {
+                    console.error("Failed to log " + type);
+                }
+            }).catch(error => {
+                console.error("Error logging " + type, error);
+            });
+        }
+
+        // Log food to the database and update the UI
+        // Log food to the database and update the UI
+        function logFoodToDatabase(foodAmount) {
+            fetch("/log-food", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    food_amount: foodAmount,
+                    timestamp: new Date().toISOString(),
+                }),
+            }).then(response => {
+                if (response.ok) {
+                    updateFoodLog(foodAmount);
+                } else {
+                    console.error("Failed to log food");
+                }
+            }).catch(error => {
+                console.error("Error logging food", error);
+            });
+        }
+
+        // Function to update the food log on the UI
+        function updateFoodLog(foodAmount) {
+            const alreadyFedElement = document.getElementById('already-fed-today');
+            const remainingFoodElement = document.getElementById('remaining-food');
+            
+            // Get current values from the DOM
+            const currentAlreadyFed = parseInt(alreadyFedElement.textContent) || 0;
+            const recommendedTotalFood = parseInt(remainingFoodElement.dataset.recommendedFood) || 0;
+
+            // Update already fed
+            const newAlreadyFed = currentAlreadyFed + parseInt(foodAmount);
+            alreadyFedElement.textContent = newAlreadyFed;
+
+            // Update remaining food (recommended total food minus already fed)
+            const newRemainingFood = Math.max(0, recommendedTotalFood - newAlreadyFed);
+            remainingFoodElement.textContent = newRemainingFood;
+        }
+
+
     </script>
 </body>
 </html>
