@@ -4,43 +4,142 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
     height: 100vh;
     margin: 0;
 }
 
 .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
 }
 
-.card {
+/* Image box */
+.image-box {
     background-color: #f9f9f9;
     border: 2px solid #ddd;
     padding: 20px;
     border-radius: 15px;
+    margin-bottom: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    max-width: 350px;
 }
 
 .dog-image {
-    max-width: 50%;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
-    margin-bottom: 20px;
+    object-fit: cover;
+    margin-bottom: 10px;
 }
 
-h1 {
-    color: #8e61ff;
+.dog-name {
     font-size: 20px;
+    color: #50C878; /* Emerald green name */
+    font-weight: bold;
+    margin-top: 0;
 }
 
-p {
-    font-size: 18px;
-    color: #333;
+.food-info-widget {
+    background-color: #f9f9f9;
+    border: 2px solid #ddd;
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .highlight {
     font-weight: bold;
-    color: #8e61ff;
+    color: #50C878; /* Emerald green highlight */
+}
+
+.log-food-container {
+    margin-top: 20px;
+}
+
+#log-food-icon {
+    color: #50C878; /* Emerald green dog bowl icon */
+    cursor: pointer;
+}
+
+/* Modal Styling */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgba(0, 0, 0, 0.6); /* Dark background with opacity */
+}
+
+/* Modal content styling */
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 30px;
+    border: none;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 400px;
+    border-radius: 20px; /* Rounded corners */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Drop shadow */
+    text-align: center;
+    animation: fadeIn 0.3s ease-out; /* Fade-in effect */
+}
+
+/* Animation for the modal pop-up */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Close button styling */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease-in;
+}
+
+.close:hover,
+.close:focus {
+    color: #50C878; /* Emerald green close button */
+    text-decoration: none;
+}
+
+/* Input field styling */
+input[type="number"] {
+    width: 80%;
+    padding: 10px;
+    margin: 15px 0;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+input[type="number"]:focus {
+    border-color: #50C878; /* Emerald green border on focus */
+    outline: none;
+}
+
+/* Submit button styling */
+input[type="submit"] {
+    background-color: #50C878; /* Emerald green button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #47b370; /* Slightly darker emerald green on hover */
 }

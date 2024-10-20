@@ -4,16 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Injeolmi's Feeding Info</title>
+    <!-- Load Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Link to external stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <img src="{{ url_for('static', filename='uploads/injeolmi.jpeg') }}" alt="Injeolmi" class="dog-image">
-            <h1>🐾 Injeolmi's Feeding Information 🐾</h1>
+    <main class="container">
+        <!-- Image section with alt text and proper heading structure -->
+        <section class="image-box">
+            <img src="{{ url_for('static', filename='uploads/injeolmi.jpeg') }}" alt="Picture of Injeolmi" class="dog-image">
+            <h1>🐾 Injeolmi 🐾</h1>
+        </section>
+
+        <!-- Feeding information section -->
+        <section class="food-info-widget">
+            <h2>🍽️ Today's Food 🍽️</h2>
             <p>Injeolmi is <span class="highlight">{{ age_in_months|round(2) }}</span> months old today!</p>
-            <p>He should get <span class="highlight">{{ grams_of_food }} grams</span> of food today.</p>
+            <p>He should get <span class="highlight">{{ grams_of_food|round(2) }} grams</span> of food today.</p>
+            
+            {% if already_fed_today > 0 %}
+                <p>He’s already been fed <span class="highlight">{{ already_fed_today }}</span> grams today.</p>
+            {% endif %}
+
+            <!-- Dog bone icon with aria-label for accessibility -->
+            <div class="log-food-container">
+                <button aria-label="Log Food" class="log-food-button">
+                    <i class="fas fa-bone fa-3x"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Hidden Log Food Form (Modal) -->
+        <div id="log-food-modal" class="modal" role="dialog" aria-labelledby="logFoodTitle" aria-hidden="true">
+            <div class="modal-content">
+                <button class="close" aria-label="Close">&times;</button>
+                <h2 id="logFoodTitle">Log Food for Injeolmi</h2>
+                <form method="POST" aria-live="polite">
+                    <label for="food_amount">How many grams of food did Injeolmi eat?</label><br>
+                    <input type="number" name="food_amount" id="food_amount" required><br><br>
+                    <input type="submit" value="Log Feeding">
+                </form>
+            </div>
         </div>
-    </div>
+    </main>
+
+    <script>
+        // Modal control script
+        const modal = document.getElementById("log-food-modal");
+        const icon = document.querySelector(".log-food-button");
+        const closeBtn = document.querySelector(".close");
+
+        // Open the modal when the icon is clicked
+        icon.onclick = function() {
+            modal.style.display = "block";
+            modal.setAttribute("aria-hidden", "false");
+        }
+
+        // Close the modal when the close button is clicked
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+            modal.setAttribute("aria-hidden", "true");
+        }
+
+        // Close the modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = "none";
+                modal.setAttribute("aria-hidden", "true");
+            }
+        }
+    </script>
 </body>
 </html>
