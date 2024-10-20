@@ -247,11 +247,21 @@ body {
     cursor: pointer;
 }
 
+/* Mobile-friendly adjustment for widgets */
+@media only screen and (max-width: 768px) {
+    .food-info-widget,
+    .poop-pee-widget {
+        width: 100%; /* Take full width on mobile */
+        margin-bottom: 20px; /* Add spacing between stacked widgets */
+    }
+}
+
 /* Ensures the app looks good on mobile */
 @media only screen and (max-width: 480px) {
     .dog-image {
-        width: 120px;
-        height: 120px;
+        width: 100px;
+        height: 100px;
+        display: block;
     }
 
     .emoji {
