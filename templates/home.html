@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Injeolmi's Feeding Info</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <img src="{{ url_for('static', filename='uploads/injeolmi.jpeg') }}" alt="Injeolmi" class="dog-image">
+            <h1>🐾 Injeolmi's Feeding Information 🐾</h1>
+            <p>Injeolmi is <span class="highlight">{{ age_in_months|round(2) }}</span> months old today!</p>
+            <p>He should get <span class="highlight">{{ grams_of_food }} grams</span> of food today.</p>
+        </div>
+    </div>
+</body>
+</html>
