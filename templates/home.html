@@ -153,6 +153,10 @@
             foodModal.style.display = 'block';  // Show the food modal when clicked
         };
 
+        document.getElementById('log-food-icon').addEventListener('touchstart', function() {
+            foodModal.style.display = 'block';  // Show the food modal when touched
+        });
+
         // Submit food entry through modal form
         document.getElementById('food-form').onsubmit = function (event) {
             event.preventDefault();
@@ -273,18 +277,16 @@
             const alreadyFedElement = document.getElementById('already-fed-today');
             const remainingFoodElement = document.getElementById('remaining-food');
             
-            // Get current values from the DOM
             const currentAlreadyFed = parseInt(alreadyFedElement.textContent) || 0;
             const recommendedTotalFood = parseInt(remainingFoodElement.dataset.recommendedFood) || 0;
 
-            // Update already fed
             const newAlreadyFed = currentAlreadyFed + parseInt(foodAmount);
             alreadyFedElement.textContent = newAlreadyFed;
 
-            // Update remaining food (recommended total food minus already fed)
             const newRemainingFood = Math.max(0, recommendedTotalFood - newAlreadyFed);
             remainingFoodElement.textContent = newRemainingFood;
         }
+
 
 
     </script>

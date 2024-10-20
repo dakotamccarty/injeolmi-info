@@ -1,3 +1,4 @@
+/* General body styling */
 body {
     font-family: 'Arial', sans-serif;
     background-color: #fdfdfd;
@@ -7,12 +8,15 @@ body {
     flex-direction: column;
     height: 100vh;
     margin: 0;
+    padding: 10px;
 }
 
+/* Container */
 .container {
     width: 100%;
     max-width: 600px;
     text-align: center;
+    padding: 0 15px; /* Padding for mobile screens */
 }
 
 /* Image box */
@@ -37,7 +41,6 @@ body {
     font-weight: bold;
     color: #50C878;
 }
-
 .weight-edit {
     margin-top: 10px;
 }
@@ -71,8 +74,10 @@ body {
     display: flex;
     justify-content: space-between;
     gap: 20px;
+    flex-wrap: wrap; /* Ensure proper wrapping on smaller screens */
 }
 
+/* Food info widget & poop/pee widget */
 .food-info-widget,
 .poop-pee-widget {
     background-color: #f9f9f9;
@@ -81,6 +86,7 @@ body {
     border-radius: 15px;
     width: 48%; /* Ensure both widgets take up equal space */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
 }
 
 .log-food-container {
@@ -150,4 +156,95 @@ body {
     color: #000;
     text-decoration: none;
     cursor: pointer;
+}
+/* Mobile-friendly adjustment for widgets */
+@media only screen and (max-width: 768px) {
+    .food-info-widget,
+    .poop-pee-widget {
+        width: 100%; /* Take full width on mobile */
+        margin-bottom: 20px; /* Add spacing between stacked widgets */
+    }
+}
+
+.log-food-container {
+    margin-top: 10px;
+}
+
+/* Poop & Pee Log icons */
+.log-icons {
+    margin: 20px 0;
+    display: flex;
+    justify-content: space-around;
+}
+
+#poop-log, #pee-log {
+    margin-top: 10px;
+}
+
+#poop-emojis, #pee-emojis {
+    display: block;
+    font-size: 2rem;
+}
+
+#poop-count-text, #pee-count-text {
+    font-size: 1.2rem;
+}
+
+.emoji {
+    font-size: 1.5rem;  /* Adjust size of emojis for better visibility */
+    display: inline-block;
+    margin-right: 5px;  /* Optional: Adds spacing between emojis */
+}
+
+/* Modal Styling */
+.modal {
+    display: none;  /* Hidden by default */
+    position: fixed; 
+    z-index: 1; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0,0,0,0.4);  /* Black background with opacity */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #f9f9f9;
+    margin: 15% auto; 
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%; /* Adjust width for mobile screens */
+    max-width: 400px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Ensures the app looks good on mobile */
+@media only screen and (max-width: 480px) {
+    .dog-image {
+        width: 120px;
+        height: 120px;
+    }
+
+    .emoji {
+        font-size: 1.2rem; /* Adjust emoji size on smaller screens */
+    }
 }
