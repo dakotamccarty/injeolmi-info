@@ -37,6 +37,16 @@ body {
     margin-bottom: 10px;
 }
 
+/* Fix for mobile image */
+@media only screen and (max-width: 768px) {
+    .dog-image {
+        width: 100px; /* Adjust width for mobile */
+        height: 100px; /* Adjust height for mobile */
+        display: block; /* Ensure the image is displayed */
+        margin: 0 auto 10px auto; /* Center the image */
+    }
+}
+
 .highlight {
     font-weight: bold;
     color: #50C878;
